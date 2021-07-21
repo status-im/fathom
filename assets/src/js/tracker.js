@@ -35,38 +35,6 @@
     return Array(n).join().split(',').map(() => s.charAt(Math.floor(Math.random() * s.length))).join('');
   }
 
-  function getCookie(name) {
-    var cookies = document.cookie ? document.cookie.split('; ') : [];
-    
-    for (var i = 0; i < cookies.length; i++) {
-      var parts = cookies[i].split('=');
-      if (decodeURIComponent(parts[0]) !== name) {
-        continue;
-      }
-
-      var cookie = parts.slice(1).join('=');
-      return decodeURIComponent(cookie);
-    }
-
-    return '';
-  }
-
-  function setCookie(name, data, args) {
-    name = encodeURIComponent(name);
-    data = encodeURIComponent(String(data));
-
-    var str = name + '=' + data;
-
-    if(args.path) {
-      str += ';path=' + args.path;
-    }
-    if (args.expires) {
-      str += ';expires='+args.expires.toUTCString();
-    }
-
-    document.cookie = str;
-  }
-
   function newVisitorData() {
     return {
       isNewVisitor: true, 
@@ -75,29 +43,6 @@
       previousPageviewId: '',
       lastSeen: +new Date(),
     }
-  }
-
-  function getData() {
-    let thirtyMinsAgo = new Date();
-    thirtyMinsAgo.setMinutes(thirtyMinsAgo.getMinutes() - 30);
-
-    let data = getCookie('_fathom');
-    if(! data) {
-      return newVisitorData();
-    }
-
-    try{
-      data = JSON.parse(data);
-    } catch(e) {
-      console.error(e);
-      return newVisitorData();
-    }
-
-    if(data.lastSeen < (+thirtyMinsAgo)) {
-      data.isNewSession = true;
-    }
-
-    return data;  
   }
 
   function findTrackerUrl() {
@@ -158,7 +103,7 @@
       referrer = document.referrer;
     }
 
-    let data = getData();
+    let data = newVisitorData();
     const d = {
       id: randomString(20),
       pid: data.previousPageviewId || '',
@@ -179,17 +124,6 @@
     img.addEventListener('load', function() {
       let now = new Date();
       let midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 24, 0, 0);
-
-      // update data in cookie
-      if( data.pagesViewed.indexOf(path) == -1 ) {
-        data.pagesViewed.push(path);
-      }
-      data.previousPageviewId = d.id;
-      data.isNewVisitor = false;
-      data.isNewSession = false;
-      data.lastSeen = +new Date();
-      setCookie('_fathom', JSON.stringify(data), { expires: midnight, path: '/' });
-
       // remove tracking img from DOM
       document.body.removeChild(img)
     });
